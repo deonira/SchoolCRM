@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from students.views import StudentViewSet
+from students.views import StudentViewSet, ConfirmDeleteFromClassView, DeleteFromClassView
 from classes.views import ClassViewSet
 from teachers.views import TeacherViewSet
 from contracts.views import ContractViewSet
@@ -33,4 +33,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/auth/', include('users.urls')),
+    path('api/students/<int:student_id>/confirm-delete-from-class/', ConfirmDeleteFromClassView.as_view(), name='confirm_delete_from_class'),
+    path('api/students/<int:student_id>/delete-from-class/', DeleteFromClassView.as_view(), name='delete_from_class'),
 ]

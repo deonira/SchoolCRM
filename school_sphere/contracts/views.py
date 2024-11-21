@@ -1,19 +1,19 @@
 import os
 import datetime
 from rest_framework import viewsets
-from rest_framework.response import Response
 from django.db.models.signals import post_save
 from .models import Contract
 from io import BytesIO
 from django.dispatch import receiver
 from .serializers import ContractSerializer
-from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from students.models import Student, Parent
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from django.core.files.base import ContentFile
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph
 
 
 class ContractViewSet(viewsets.ModelViewSet):
@@ -39,19 +39,35 @@ class ContractViewSet(viewsets.ModelViewSet):
             )
 
             pdf_buffer = BytesIO()
+
+            styles = getSampleStyleSheet()
+            normal_style = styles['Normal']
+            normal_style.fontSize = 12
+            normal_style.fontName = 'DejaVu'
+
             p = canvas.Canvas(pdf_buffer, pagesize=letter)
-            p.setFont('DejaVu', 12)
 
-            p.drawString(100, 750, "Договор о предоставлении образовательных услуг")
-            p.drawString(100, 730, f"Дата: {datetime.date.today().strftime('%Y-%m-%d')}")
+            title = "Договор о предоставлении образовательных услуг"
+            title_paragraph = Paragraph(title, normal_style)
+            title_paragraph.wrapOn(p, 400, 100)
+            title_paragraph.drawOn(p, 80, 750)
 
-            p.drawString(100, 680, "Ученик:")
-            p.drawString(120, 660, f"ФИО: {student.full_name}")
-            p.drawString(120, 640, f"Дата рождения: {student.date_of_birth.strftime('%Y-%m-%d')}")
-            p.drawString(120, 620, f"Номер свидетельства о рождении: {student.birth_certificate_number}")
+            date_text = f"Дата: {datetime.date.today().strftime('%Y-%m-%d')}"
+            date_paragraph = Paragraph(date_text, normal_style)
+            date_paragraph.wrapOn(p, 400, 100)
+            date_paragraph.drawOn(p, 80, 710)
 
-            p.drawString(100, 580, "Родитель(и):")
-            y_position = 560
+            student_info = f"""
+            <b>Ученик:</b><br/>
+            ФИО: {student.full_name}<br/>
+            Дата рождения: {student.date_of_birth.strftime('%Y-%m-%d')}<br/>
+            Номер свидетельства о рождении: {student.birth_certificate_number}
+            """
+            student_paragraph = Paragraph(student_info, normal_style)
+            student_paragraph.wrapOn(p, 400, 100)
+            student_paragraph.drawOn(p, 80, 660)
+
+            parents_content = "<b>Родитель(и):</b><br/>"
             parents = []
             if student.parent_1:
                 parents.append(student.parent_1)
@@ -60,18 +76,39 @@ class ContractViewSet(viewsets.ModelViewSet):
 
             for parent in parents:
                 if parent.full_name and parent.phone_number:
-                    p.drawString(120, y_position, f"ФИО: {parent.full_name}, Телефон: {parent.phone_number}")
+                    parents_content += f"ФИО: {parent.full_name}, Телефон: {parent.phone_number}<br/>"
                 elif parent.full_name:
-                    p.drawString(120, y_position, f"ФИО: {parent.full_name}")
+                    parents_content += f"ФИО: {parent.full_name}<br/>"
                 elif parent.phone_number:
-                    p.drawString(120, y_position, f"Телефон: {parent.phone_number}")
-                y_position -= 20
+                    parents_content += f"Телефон: {parent.phone_number}<br/>"
 
-            p.drawString(100, y_position - 20, "Подписи:")
-            p.drawString(100, y_position - 40, "___________________")
-            p.drawString(100, y_position - 60, "Родитель(и)")
-            p.drawString(400, y_position - 40, "___________________")
-            p.drawString(400, y_position - 60, "Представитель школы")
+            parents_paragraph = Paragraph(parents_content, normal_style)
+            parents_paragraph.wrapOn(p, 400, 100)
+            parents_paragraph.drawOn(p, 80, 620)
+
+            conditions = """
+            <b> Условия договора:</b><br/>
+            1. Образовательный процесс будет проходить в соответствии с учебным планом школы.<br/>
+            2. Студент обязуется соблюдать правила внутреннего распорядка учебного заведения.<br/>
+            3. Родители обязуются своевременно оплачивать обучение и содействовать в образовательном процессе.<br/>
+            4. Школа обязуется предоставлять образовательные услуги в соответствии с законодательством Кыргызской Республики.
+            """
+            conditions_paragraph = Paragraph(conditions, normal_style)
+            conditions_paragraph.wrapOn(p, 400, 100)
+            conditions_paragraph.drawOn(p, 80, 500)
+
+            signatures = """
+            <b>Подписи:</b><br/>
+            
+            ___________________ <br/>
+            Родитель(и)<br/><br/>
+            
+            ___________________ <br/>
+            Представитель школы
+            """
+            signatures_paragraph = Paragraph(signatures, normal_style)
+            signatures_paragraph.wrapOn(p, 400, 100)
+            signatures_paragraph.drawOn(p, 80, 300)
 
             p.showPage()
             p.save()

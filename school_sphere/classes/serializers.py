@@ -10,7 +10,7 @@ class ClassSerializer(serializers.ModelSerializer):
     class_teacher = TeacherSerializer(read_only=True)
     students = serializers.SerializerMethodField()
     grade = serializers.ChoiceField(
-        choices=[(i, i) for i in range(0, 12)],
+        choices=[(i, i) for i in range(1, 12)],
         write_only=True,
     )
     letter = serializers.ChoiceField(
@@ -25,7 +25,7 @@ class ClassSerializer(serializers.ModelSerializer):
 
     def get_students(self, obj):
         students = obj.students.all()
-        return [{"id": student.id, "full_name": student.full_name} for student in students]
+        return [{"id": student.id, "full_name": student.full_name, "date_of_birth": student.date_of_birth} for student in students]
 
     def get_student_count(self, obj):
         return obj.students.count()
@@ -72,12 +72,14 @@ class ClassSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
-        if 'class_teacher' in representation:
-            teacher_data = representation['class_teacher']
+        class_teacher = instance.class_teacher
+        if class_teacher:
             representation['class_teacher'] = {
-                'id': teacher_data.get('id'),
-                'full_name': teacher_data.get('full_name')
+                'id': class_teacher.id,
+                'full_name': class_teacher.full_name,
             }
+        else:
+            representation['class_teacher'] = None
 
         return representation
 

@@ -19,7 +19,7 @@ class Student(models.Model):
     letter = models.CharField(max_length=1, null=True, blank=True)
     parent_1 = models.ForeignKey(Parent, related_name='parent_1', on_delete=models.CASCADE)
     parent_2 = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='parent_2', blank=True, null=True)
-    class_assigned = models.ForeignKey(Class, related_name='students', on_delete=models.CASCADE)
+    class_assigned = models.ForeignKey(Class, related_name='students', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.full_name
