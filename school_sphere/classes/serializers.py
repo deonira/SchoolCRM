@@ -19,13 +19,15 @@ class ClassSerializer(serializers.ModelSerializer):
     )
     class_name = serializers.SerializerMethodField()
     teacher = serializers.PrimaryKeyRelatedField(queryset=Teacher.objects.all(), write_only=True, required=False)
+
     class Meta:
         model = Class
-        fields = ['id','grade','letter','class_name','teacher','class_teacher', 'students']
+        fields = ['id', 'grade', 'letter', 'class_name', 'teacher', 'class_teacher', 'students']
 
     def get_students(self, obj):
         students = obj.students.all()
-        return [{"id": student.id, "full_name": student.full_name, "date_of_birth": student.date_of_birth} for student in students]
+        return [{"id": student.id, "full_name": student.full_name, "date_of_birth": student.date_of_birth} for student
+                in students]
 
     def get_student_count(self, obj):
         return obj.students.count()
@@ -38,15 +40,17 @@ class ClassSerializer(serializers.ModelSerializer):
         validated_data.pop('grade', None)
         validated_data.pop('letter', None)
 
+
+        if teacher_data and Class.objects.filter(class_teacher=teacher_data).exists():
+            raise serializers.ValidationError(
+                f"Учитель {teacher_data.full_name} уже является классным руководителем другого класса."
+            )
+
+
         student_class, created = Class.objects.get_or_create(grade=grade, letter=letter, **validated_data)
 
         if created:
             if teacher_data:
-                if Class.objects.filter(class_teacher=teacher_data).exists():
-                    raise serializers.ValidationError(
-                        f"Учитель {teacher_data.full_name} уже является классным руководителем другого класса."
-                    )
-
                 student_class.class_teacher = teacher_data
                 student_class.save()
 
@@ -82,12 +86,6 @@ class ClassSerializer(serializers.ModelSerializer):
             representation['class_teacher'] = None
 
         return representation
-
-    def validate_class_teacher(self, value):
-        if Class.objects.filter(class_teacher=value).exists():
-            raise serializers.ValidationError(
-                f"Учитель {value.full_name} уже является классным руководителем в другом классе.")
-        return value
 
     def get_class_name(self, obj):
         return f"{obj.grade}{obj.letter}"

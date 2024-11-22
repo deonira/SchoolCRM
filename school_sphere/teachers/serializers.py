@@ -1,6 +1,8 @@
+import re
 from rest_framework import serializers
 from .models import Teacher
 from classes.models import Class
+from datetime import datetime
 
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,3 +25,19 @@ class TeacherSerializer(serializers.ModelSerializer):
         instance.work_experience = validated_data.get('work_experience', instance.work_experience)
         instance.save()
         return instance
+
+    def validate_email(self, email):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            raise serializers.ValidationError("Неверный формат электронной почты.")
+        return email
+
+    def validate_date_of_birth(self, value):
+        if value > datetime.now().date():
+            raise serializers.ValidationError("Дата рождения не может быть в будущем.")
+        return value
+    def validate_phone_number(self, phone_number):
+        if phone_number and phone_number != "":
+            phone_pattern = re.compile(r'^\+996\d{9}$')
+            if not phone_pattern.match(phone_number):
+                raise serializers.ValidationError("Неверный формат номера телефона. Должно быть в формате +996XXXXXXXXX.")
+        return phone_number

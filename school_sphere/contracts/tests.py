@@ -79,7 +79,7 @@ class ContractViewSetTests(APITestCase):
             self.assertIn("Parent One", pdf_text)
             self.assertNotIn("Parent Two", pdf_text)
 
-        print("PDF Content:\n", pdf_text)
+
 
     def test_update_student_and_add_parent(self):
 
@@ -89,7 +89,7 @@ class ContractViewSetTests(APITestCase):
 
         parent2_data = {
             "full_name": "Updated Parent Two",
-            "phone_number": "+987654321",
+            "phone_number": "+996999486078",
             "email": "updated2@mail.ru"
         }
         parent2 = Parent.objects.create(**parent2_data)
@@ -113,10 +113,9 @@ class ContractViewSetTests(APITestCase):
             }
         }
 
-        url = f'/api/students/{self.student.id}/'
+        url = f'/students/{self.student.id}/'
         response = self.client.patch(url, new_data, format='json')
-        print("Response Status Code:", response.status_code)
-        print("Response Data:", response.data)
+
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -138,4 +137,3 @@ class ContractViewSetTests(APITestCase):
 
         self.assertIn("John Doe Updated", pdf_text)
         self.assertIn("Parent Two", pdf_text)
-        print("Updated PDF Content:\n", pdf_text)

@@ -84,7 +84,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 
             parents_paragraph = Paragraph(parents_content, normal_style)
             parents_paragraph.wrapOn(p, 400, 100)
-            parents_paragraph.drawOn(p, 80, 620)
+            parents_paragraph.drawOn(p, 80, 610)
 
             conditions = """
             <b> Условия договора:</b><br/>

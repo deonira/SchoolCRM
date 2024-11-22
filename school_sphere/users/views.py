@@ -30,6 +30,3 @@ class AssistantDashboardView(APIView):
 
     def get(self, request):
         return Response({"message": "Добро пожаловать, ассистент!"})
-
-def login_view(request):
-    return render(request, 'login.html')
